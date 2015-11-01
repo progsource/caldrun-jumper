@@ -16,7 +16,8 @@
             }
         ),
         cursors = [],
-        otherCursors;
+        otherCursors,
+        fx;
 
 // -----------------------------------------------------------------------------
 
@@ -48,6 +49,7 @@
         console.group('onSpace');
         console.log(event);
         console.groupEnd();
+        fx.play();
     }
 
     function bindKeys(cursorType) {
@@ -100,12 +102,16 @@
 
     function preload() {
         game.load.image('background1', 'img/background.jpg');
+
+        game.load.audio('sfx', 'sounds/sound5.ogg');
     }
 
     function create() {
         game.add.sprite(0, 0, 'background1');
 
         keyBoardSetup();
+
+        fx = game.add.audio('sfx');
     }
 
     function update() {
