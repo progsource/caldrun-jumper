@@ -15,8 +15,8 @@
                 update: update
             }
         ),
-        cursors,
-        wasdCursors;
+        cursors = [],
+        otherCursors;
 
 // -----------------------------------------------------------------------------
 
@@ -44,41 +44,55 @@
         console.groupEnd();
     }
 
+    function onSpace(event) {
+        console.group('onSpace');
+        console.log(event);
+        console.groupEnd();
+    }
+
+    function bindKeys(cursorType) {
+        cursorType.up.onUp.add(function(e) {
+            onUp(e);
+        });
+        cursorType.right.onUp.add(function(e) {
+            onRight(e);
+        });
+        cursorType.down.onUp.add(function(e) {
+            onDown(e);
+        });
+        cursorType.left.onUp.add(function(e) {
+            onLeft(e);
+        });
+    }
+
     function keyBoardSetup() {
-        cursors = game.input.keyboard.createCursorKeys();
-        wasdCursors = game.input.keyboard.addKeys({
+        cursors[cursors.length] = game.input.keyboard.createCursorKeys();
+        cursors[cursors.length] = game.input.keyboard.addKeys({
             'up': Phaser.KeyCode.W,
             'right': Phaser.KeyCode.D,
             'down': Phaser.KeyCode.S,
             'left': Phaser.KeyCode.A
         });
-
-        cursors.up.onUp.add(function(e) {
-            onUp(e);
-        });
-        wasdCursors.up.onUp.add(function(e) {
-            onUp(e);
-        });
-
-        cursors.right.onUp.add(function(e) {
-            onRight(e);
-        });
-        wasdCursors.right.onUp.add(function(e) {
-            onRight(e);
+        cursors[cursors.length] = game.input.keyboard.addKeys({
+            'up': Phaser.KeyCode.NUMPAD_8,
+            'right': Phaser.KeyCode.NUMPAD_6,
+            'down': Phaser.KeyCode.NUMPAD_2,
+            'left': Phaser.KeyCode.NUMPAD_4
         });
 
-        cursors.down.onUp.add(function(e) {
-            onDown(e);
-        });
-        wasdCursors.down.onUp.add(function(e) {
-            onDown(e);
+        var i = 0,
+            cursorLength = cursors.length;
+
+        for (; i < cursorLength; ++i) {
+            bindKeys(cursors[i]);
+        }
+
+        otherCursors = game.input.keyboard.addKeys({
+            'space': Phaser.KeyCode.SPACEBAR
         });
 
-        cursors.left.onUp.add(function(e) {
-            onLeft(e);
-        });
-        wasdCursors.left.onUp.add(function(e) {
-            onLeft(e);
+        otherCursors.space.onUp.add(function(e) {
+            onSpace(e);
         });
     }
 
