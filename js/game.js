@@ -58,6 +58,8 @@
         fx.play();
     }
 
+// -----------------------------------------------------------------------------
+
     function bindKeys(cursorType) {
         cursorType.up.onUp.add(function(e) {
             onUp(e);
