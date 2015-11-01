@@ -12,12 +12,14 @@
             {
                 preload: preload,
                 create: create,
-                update: update
+                update: update,
+                render: render
             }
         ),
         cursors = [],
         otherCursors,
-        fx;
+        fx,
+        sprite;
 
 // -----------------------------------------------------------------------------
 
@@ -25,24 +27,28 @@
         console.group('onUp');
         console.log(event);
         console.groupEnd();
+        sprite.animations.play('up', 1, true);
     }
 
     function onRight(event) {
         console.group('onRight');
         console.log(event);
         console.groupEnd();
+        sprite.animations.play('right', 1, true);
     }
 
     function onDown(event) {
         console.group('onDown');
         console.log(event);
         console.groupEnd();
+        sprite.animations.play('down', 1, true);
     }
 
     function onLeft(event) {
         console.group('onLeft');
         console.log(event);
         console.groupEnd();
+        sprite.animations.play('left', 1, true);
     }
 
     function onSpace(event) {
@@ -102,12 +108,22 @@
 
     function preload() {
         game.load.image('background1', 'img/background.jpg');
+        game.load.spritesheet('sprite', 'img/spritesheet.png', 20, 30);
 
         game.load.audio('sfx', 'sounds/sound5.ogg');
     }
 
     function create() {
         game.add.sprite(0, 0, 'background1');
+
+        // x, y, key
+        sprite = game.add.sprite(40, 100, 'sprite');
+
+        sprite.animations.add('up', [0, 1, 2]);
+        sprite.animations.add('right', [3, 4, 5]);
+        sprite.animations.add('down', [6, 7, 8]);
+        sprite.animations.add('left', [9, 10, 11]);
+        sprite.animations.play('down', 1, true);
 
         keyBoardSetup();
 
@@ -116,6 +132,11 @@
 
     function update() {
 
+
+    }
+
+    function render() {
+        game.debug.spriteInfo(sprite, 20, 32);
 
     }
 }(Phaser));
