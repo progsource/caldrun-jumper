@@ -14,25 +14,88 @@
                 create: create,
                 update: update
             }
-        );
+        ),
+        cursors,
+        wasdCursors;
 
-    function preload() {}
-    
-    function create() {}
+// -----------------------------------------------------------------------------
+
+    function onUp(event) {
+        console.group('onUp');
+        console.log(event);
+        console.groupEnd();
+    }
+
+    function onRight(event) {
+        console.group('onRight');
+        console.log(event);
+        console.groupEnd();
+    }
+
+    function onDown(event) {
+        console.group('onDown');
+        console.log(event);
+        console.groupEnd();
+    }
+
+    function onLeft(event) {
+        console.group('onLeft');
+        console.log(event);
+        console.groupEnd();
+    }
+
+    function keyBoardSetup() {
+        cursors = game.input.keyboard.createCursorKeys();
+        wasdCursors = game.input.keyboard.addKeys({
+            'up': Phaser.KeyCode.W,
+            'right': Phaser.KeyCode.D,
+            'down': Phaser.KeyCode.S,
+            'left': Phaser.KeyCode.A
+        });
+
+        cursors.up.onUp.add(function(e) {
+            onUp(e);
+        });
+        wasdCursors.up.onUp.add(function(e) {
+            onUp(e);
+        });
+
+        cursors.right.onUp.add(function(e) {
+            onRight(e);
+        });
+        wasdCursors.right.onUp.add(function(e) {
+            onRight(e);
+        });
+
+        cursors.down.onUp.add(function(e) {
+            onDown(e);
+        });
+        wasdCursors.down.onUp.add(function(e) {
+            onDown(e);
+        });
+
+        cursors.left.onUp.add(function(e) {
+            onLeft(e);
+        });
+        wasdCursors.left.onUp.add(function(e) {
+            onLeft(e);
+        });
+    }
+
+// -----------------------------------------------------------------------------
+
+    function preload() {
+        game.load.image('background1', 'img/background.jpg');
+    }
+
+    function create() {
+        game.add.sprite(0, 0, 'background1');
+
+        keyBoardSetup();
+    }
 
     function update() {
-        this.game.input.keyboard.onDownCallback = function(e) {
-            console.log(e.keyCode);
 
-            if (37 === e.keyCode) {
-                console.log('key left pressed');
-            } else if (38 === e.keyCode) {
-                console.log('key up pressed');
-            } else if (39 === e.keyCode) {
-                console.log('key right pressed');
-            } else if (40 === e.keyCode) {
-                console.log('key down pressed');
-            }
-        };
+
     }
 }(Phaser));
