@@ -19,7 +19,8 @@
         cursors = [],
         otherCursors,
         fx,
-        sprite;
+        sprite,
+        tween;
 
 // -----------------------------------------------------------------------------
 
@@ -126,6 +127,17 @@
         sprite.animations.add('down', [6, 7, 8]);
         sprite.animations.add('left', [9, 10, 11]);
         sprite.animations.play('down', 1, true);
+
+        tween = game.add.tween(sprite).to(
+            {x: 200}, // properties
+            7500, // duration
+            Phaser.Easing.Quadratic.InOut, // ease
+            false, // autoStart
+            0, // delay
+            -1, // repeat (-1 = forever)
+            true // yoyo
+        );
+        tween.start();
 
         keyBoardSetup();
 
