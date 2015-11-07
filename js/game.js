@@ -44,7 +44,7 @@
         isGameOverShown,
         caldrun,
         colors = [
-            0x0000cc,
+            0x0099cc,
             0xcccccc,
             0x00ffff,
             0xffff00
@@ -115,11 +115,10 @@
         if (!isGameStop) {
             if (neko.body.touching.down) {
                 neko.body.velocity.y = -900;
+                neko.animations.stop();
+                neko.animations.frame = 16;
+                fx.play();
             }
-
-            neko.animations.stop();
-            neko.animations.frame = 16;
-            fx.play();
         }
     }
 
