@@ -40,7 +40,8 @@
         gameTimer,
         bgfx,
         isGameStop = false,
-        gameOverText;
+        gameOverText,
+        isGameOverShown;
 
 
 // -----------------------------------------------------------------------------
@@ -68,6 +69,19 @@
 
     function startTimer() {
         gameTimer = setInterval(setTime, 1000);
+    }
+
+    function storageAvailable(type) {
+    	try {
+    		var storage = window[type],
+    			x = '__storage_test__';
+    		storage.setItem(x, x);
+    		storage.removeItem(x);
+    		return true;
+    	}
+    	catch(e) {
+    		return false;
+    	}
     }
 // -----------------------------------------------------------------------------
 
@@ -131,6 +145,8 @@
             neko.animations.stop();
             neko.animations.frame = 16;
             fx.play();
+        } else {
+            reset();
         }
     }
 
@@ -190,7 +206,7 @@
         if (!isKillItemTriggered) {
             isKillItemTriggered = true;
             setTimeout(function() {
-                item.kill();
+                item.destroy();
                 score += 10;
                 updateScoreText();
                 isKillItemTriggered = false;
@@ -212,6 +228,18 @@
         isAnItemVisible = true;
     }
 
+
+    function reset() {
+        timeElapsed = 90;
+        isGameOverShown = false;
+        gameOverText.destroy();
+        neko.x = 0;
+        neko.y = game.height - 100;
+        score = 0;
+        isGameStop = false;
+        startTimer();
+        scoreText.text = 'score: 0';
+    }
 // -----------------------------------------------------------------------------
 
     function preload() {
@@ -219,6 +247,7 @@
         game.load.spritesheet('sprite', 'img/spritesheet.png', 20, 30);
 
         game.load.spritesheet('neko', 'img/Neko_edited.png', 32, 32, 17);
+
         game.load.spritesheet('items', 'img/items.png', 32, 32);
 
         game.load.audio('sfx', 'sounds/sound5.ogg');
@@ -231,7 +260,6 @@
         game.add.sprite(0, 0, 'background1');
         platforms = game.add.group();
         platforms.enableBody = true;
-
         collectibleItems = game.add.group();
         collectibleItems.enableBody = true;
 
@@ -269,26 +297,49 @@
 
         timeText = game.add.text(16, 64, '0', { fontSize: '32px', fill: '#fff' });
         startTimer();
+
+        if (storageAvailable('localStorage')) {
+            localStorage.setItem('playerName', '');
+            localStorage.setItem('score', 0);
+        }
+    }
+
+    function updateHighscore() {
+        if (storageAvailable('localStorage')) {
+            if (score > localStorage['score']) {
+                var playerName = prompt('Please enter your name', 'unknown player');
+                localStorage.setItem('playerName', playerName);
+                localStorage.setItem('score', score);
+            }
+        }
+    }
+
+    function getHighscore() {
+        return {
+            score: localStorage['score'],
+            playerName: localStorage['playerName']
+        };
     }
 
     function update() {
 
-        if (0 >= timeElapsed) {
-            // console.log('gameOver');
-
+        if (0 >= timeElapsed && !isGameOverShown) {
             neko.animations.stop();
             clearInterval(gameTimer);
 
             timeText.text = 0;
             bgfx.stop();
             isGameStop = true;
+            isGameOverShown = true;
 
             setTimeout(function() {
+                updateHighscore();
+                var highscore = getHighscore();
                 gameOverText = game.add.text(
-                    game.world.width / 4,
+                    game.world.width / 6,
                     game.world.height / 4,
-                    "finish!\nyour score: " + score,
-                    {fontSize: '64px', fill: '#fff'}
+                    "finish!\nhighscore player: " + highscore.playerName + "\nhighscore: " + highscore.score + "\nyour score: " + score + "\npress space",
+                    {fontSize: '54px', fill: '#fff'}
                 );
             }, 200);
         }
