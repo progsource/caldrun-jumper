@@ -20,7 +20,43 @@
         otherCursors,
         fx,
         sprite,
-        tween;
+        tween,
+        platforms,
+        graphics,
+        neko,
+        collectibles = [
+            {
+                name: 'paperRoll',
+                imgFrame: 1
+            },
+            {
+                name: 'blueCrystal',
+                imgFrame: 2
+            }
+        ],
+        collectiblesLength = collectibles.length,
+        collectibleTimes = [10, 30],
+        collectibleItems,
+        isKillItemTriggered = false;
+
+
+// -----------------------------------------------------------------------------
+    function getRand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+// -----------------------------------------------------------------------------
+
+    function displayGoLeft() {
+        neko.animations.play('walkLeft', 10, true);
+    }
+
+    function displayGoRight() {
+        neko.animations.play('walkRight', 10, true);
+    }
+
+    function displayIdle() {
+        neko.animations.play('idle', 5, true);
+    }
 
 // -----------------------------------------------------------------------------
 
@@ -28,34 +64,32 @@
         console.group('onUp');
         console.log(event);
         console.groupEnd();
-        sprite.animations.play('up', 1, true);
     }
 
     function onRight(event) {
-        console.group('onRight');
-        console.log(event);
-        console.groupEnd();
-        sprite.animations.play('right', 1, true);
+        neko.body.velocity.x = 150;
+        displayGoRight();
     }
 
     function onDown(event) {
-        console.group('onDown');
-        console.log(event);
-        console.groupEnd();
-        sprite.animations.play('down', 1, true);
+        neko.body.velocity.x = 0;
+        displayIdle();
     }
 
     function onLeft(event) {
-        console.group('onLeft');
-        console.log(event);
-        console.groupEnd();
-        sprite.animations.play('left', 1, true);
+        neko.body.velocity.x = -150;
+        displayGoLeft();
     }
 
     function onSpace(event) {
-        console.group('onSpace');
-        console.log(event);
-        console.groupEnd();
+
+        // neko.body.velocity.x = 0;
+        if (neko.body.touching.down) {
+            neko.body.velocity.y = -900;
+        }
+
+        neko.animations.stop();
+        neko.animations.frame = 16;
         fx.play();
     }
 
@@ -109,48 +143,93 @@
 
 // -----------------------------------------------------------------------------
 
+    function collectItem(player, item) {
+        item.body.velocity.y = -200;
+        if (!isKillItemTriggered) {
+            isKillItemTriggered = true;
+            setTimeout(function() {
+                item.kill();
+                console.log('got item');
+                isKillItemTriggered = false;
+            }, 300);
+        }
+    }
+
+// -----------------------------------------------------------------------------
+
     function preload() {
         game.load.image('background1', 'img/background.jpg');
         game.load.spritesheet('sprite', 'img/spritesheet.png', 20, 30);
+
+        game.load.spritesheet('neko', 'img/Neko_edited.png', 32, 32, 17);
+        game.load.spritesheet('items', 'img/items.png', 32, 32);
 
         game.load.audio('sfx', 'sounds/sound5.ogg');
     }
 
     function create() {
+        game.physics.startSystem(Phaser.Physics.ARCADE);
         game.add.sprite(0, 0, 'background1');
+        platforms = game.add.group();
+        platforms.enableBody = true;
 
-        // x, y, key
-        sprite = game.add.sprite(40, 100, 'sprite');
+        collectibleItems = game.add.group();
+        collectibleItems.enableBody = true;
 
-        sprite.animations.add('up', [0, 1, 2]);
-        sprite.animations.add('right', [3, 4, 5]);
-        sprite.animations.add('down', [6, 7, 8]);
-        sprite.animations.add('left', [9, 10, 11]);
-        sprite.animations.play('down', 1, true);
+        var bmd = game.add.bitmapData(game.width, 20, 'bottomLine', true);
+        bmd.ctx.beginPath();
+        bmd.ctx.rect(0, 0, game.width, 20);
+        bmd.ctx.fillStyle = '#333333';
+        bmd.ctx.fill();
+        var drawnObject = game.add.sprite(0, game.height - 20, bmd);
+        // var ground = platforms.create(0, game.world.height - 64, 'bottomLine');
+        platforms.add(drawnObject);
+        drawnObject.body.immovable = true;
 
-        tween = game.add.tween(sprite).to(
-            {x: 200}, // properties
-            7500, // duration
-            Phaser.Easing.Quadratic.InOut, // ease
-            false, // autoStart
-            0, // delay
-            -1, // repeat (-1 = forever)
-            true // yoyo
-        );
-        tween.start();
+
+        neko = game.add.sprite(0, game.height - 100, 'neko');
+        neko.animations.add('walkRight', [0, 1, 2, 3, 4, 5]);
+        neko.animations.add('walkLeft', [6, 7, 8, 9, 10, 11]);
+        neko.animations.add('idle', [12, 13, 14, 15]);
+        displayIdle();
+
+        game.physics.arcade.enable(neko);
+        neko.body.bounce.y = 0.2;
+        neko.body.gravity.y = 1000;
+        neko.body.collideWorldBounds = true;
 
         keyBoardSetup();
 
         fx = game.add.audio('sfx');
+
+        setTimeout(function() {
+            var randNr = getRand(0, collectiblesLength - 1);
+            var item = collectibleItems.create(game.world.centerX, 300, 'items');
+            item.animations.frame = collectibles[randNr].imgFrame;
+            // game.physics.arcade.enable(item);
+        }, 100)
     }
 
     function update() {
 
+        game.physics.arcade.collide(neko, platforms);
+        game.physics.arcade.overlap(neko, collectibleItems, collectItem, null, this);
+        // game.physics.arcade.collide(collectibleItems, neko);
+
+        if (neko.body.touching.down && neko.body.velocity.x < 0) {
+            displayGoLeft();
+        }
+        if (neko.body.touching.down && neko.body.velocity.x > 0) {
+            displayGoRight();
+        }
+        if (neko.body.touching.down && neko.body.velocity.x === 0) {
+            displayIdle();
+        }
 
     }
 
     function render() {
-        game.debug.spriteInfo(sprite, 20, 32);
+        // game.debug.spriteInfo(neko, 20, 32);
 
     }
 }(Phaser));
