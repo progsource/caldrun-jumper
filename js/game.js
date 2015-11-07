@@ -24,25 +24,49 @@
         platforms,
         graphics,
         neko,
-        collectibles = [
-            {
-                name: 'paperRoll',
-                imgFrame: 1
-            },
-            {
-                name: 'blueCrystal',
-                imgFrame: 2
-            }
-        ],
-        collectiblesLength = collectibles.length,
+        collectiblesLength = 37,
         collectibleTimes = [10, 30],
         collectibleItems,
-        isKillItemTriggered = false;
+        isKillItemTriggered = false,
+        score = 0,
+        scoreText,
+        isAnItemVisible = false,
+        lastItemPositionX = 0,
+        itemMinDistance = 70,
+        timeElapsed = 0,
+        timeText,
+        nekoSpeed = 500,
+        gameTimer,
+        bgfx,
+        isGameStop = false,
+        gameOverText;
 
 
 // -----------------------------------------------------------------------------
     function getRand(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function getRandAwayFromX(min, max) {
+        var newRand;
+
+        while (true) {
+            newRand = getRand(min, max);
+            if (
+                (newRand < lastItemPositionX && newRand < lastItemPositionX - itemMinDistance) ||
+                (newRand > lastItemPositionX && newRand > lastItemPositionX + itemMinDistance)
+            ) {
+                return newRand;
+            }
+        }
+    }
+
+    function setTime() {
+        ++timeElapsed;
+    }
+
+    function startTimer() {
+        gameTimer = setInterval(setTime, 1000);
     }
 // -----------------------------------------------------------------------------
 
@@ -58,39 +82,55 @@
         neko.animations.play('idle', 5, true);
     }
 
+    function updateScoreText() {
+        scoreText.text = 'score: ' + score;
+    }
+
 // -----------------------------------------------------------------------------
 
     function onUp(event) {
-        console.group('onUp');
-        console.log(event);
-        console.groupEnd();
+        if (!isGameStop) {
+            if (neko.body.touching.down) {
+                neko.body.velocity.y = -900;
+            }
+
+            neko.animations.stop();
+            neko.animations.frame = 16;
+            fx.play();
+        }
     }
 
     function onRight(event) {
-        neko.body.velocity.x = 150;
-        displayGoRight();
+        if (!isGameStop) {
+            neko.body.velocity.x = nekoSpeed;
+            displayGoRight();
+        }
     }
 
     function onDown(event) {
-        neko.body.velocity.x = 0;
-        displayIdle();
+        if (!isGameStop) {
+            neko.body.velocity.x = 0;
+            displayIdle();
+        }
     }
 
     function onLeft(event) {
-        neko.body.velocity.x = -150;
-        displayGoLeft();
+        if (!isGameStop) {
+            neko.body.velocity.x = -1 * nekoSpeed;
+            displayGoLeft();
+        }
     }
 
     function onSpace(event) {
+        if (!isGameStop) {
+            if (neko.body.touching.down) {
+                neko.body.velocity.y = -900;
+            }
 
-        // neko.body.velocity.x = 0;
-        if (neko.body.touching.down) {
-            neko.body.velocity.y = -900;
+            neko.animations.stop();
+            neko.animations.frame = 16;
+            fx.play();
         }
-
-        neko.animations.stop();
-        neko.animations.frame = 16;
-        fx.play();
     }
 
 // -----------------------------------------------------------------------------
@@ -149,10 +189,25 @@
             isKillItemTriggered = true;
             setTimeout(function() {
                 item.kill();
-                console.log('got item');
+                score += 10;
+                updateScoreText();
                 isKillItemTriggered = false;
-            }, 300);
+                isAnItemVisible = false;
+            }, 500);
         }
+    }
+
+    function showANewItem() {
+        var randNr = getRand(0, collectiblesLength - 1);
+        lastItemPositionX = getRandAwayFromX(20, game.world.width - 40);
+
+        var item = collectibleItems.create(
+            lastItemPositionX,
+            getRand(300, 400),
+            'items'
+        );
+        item.animations.frame = randNr;
+        isAnItemVisible = true;
     }
 
 // -----------------------------------------------------------------------------
@@ -165,6 +220,7 @@
         game.load.spritesheet('items', 'img/items.png', 32, 32);
 
         game.load.audio('sfx', 'sounds/sound5.ogg');
+        game.load.audio('bgsfx', 'sounds/An_Adventure_Awaits.mp3');
     }
 
     function create() {
@@ -182,7 +238,6 @@
         bmd.ctx.fillStyle = '#333333';
         bmd.ctx.fill();
         var drawnObject = game.add.sprite(0, game.height - 20, bmd);
-        // var ground = platforms.create(0, game.world.height - 64, 'bottomLine');
         platforms.add(drawnObject);
         drawnObject.body.immovable = true;
 
@@ -201,29 +256,58 @@
         keyBoardSetup();
 
         fx = game.add.audio('sfx');
+        bgfx = game.add.audio('bgsfx');
+        bgfx.play();
 
-        setTimeout(function() {
-            var randNr = getRand(0, collectiblesLength - 1);
-            var item = collectibleItems.create(game.world.centerX, 300, 'items');
-            item.animations.frame = collectibles[randNr].imgFrame;
-            // game.physics.arcade.enable(item);
-        }, 100)
+        // setTimeout(showANewItem, 100);
+
+        scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#fff' });
+
+        timeText = game.add.text(16, 64, '0', { fontSize: '32px', fill: '#fff' });
+        startTimer();
     }
 
     function update() {
 
-        game.physics.arcade.collide(neko, platforms);
-        game.physics.arcade.overlap(neko, collectibleItems, collectItem, null, this);
-        // game.physics.arcade.collide(collectibleItems, neko);
+        if (90 <= timeElapsed) {
+            // console.log('gameOver');
 
-        if (neko.body.touching.down && neko.body.velocity.x < 0) {
-            displayGoLeft();
+            neko.animations.stop();
+            clearInterval(gameTimer);
+
+            timeText.text = 90;
+            bgfx.stop();
+            isGameStop = true;
+
+            setTimeout(function() {
+                gameOverText = game.add.text(
+                    game.world.width / 4,
+                    game.world.height / 4,
+                    "finish!\nyour score: " + score,
+                    {fontSize: '64px', fill: '#fff'}
+                );
+            }, 200);
         }
-        if (neko.body.touching.down && neko.body.velocity.x > 0) {
-            displayGoRight();
-        }
-        if (neko.body.touching.down && neko.body.velocity.x === 0) {
-            displayIdle();
+
+        if (!isGameStop) {
+            game.physics.arcade.collide(neko, platforms);
+            game.physics.arcade.overlap(neko, collectibleItems, collectItem, null, this);
+
+            if (neko.body.touching.down && neko.body.velocity.x < 0) {
+                displayGoLeft();
+            }
+            if (neko.body.touching.down && neko.body.velocity.x > 0) {
+                displayGoRight();
+            }
+            if (neko.body.touching.down && neko.body.velocity.x === 0) {
+                displayIdle();
+            }
+
+            if (!isAnItemVisible) {
+                showANewItem();
+            }
+
+            timeText.text = timeElapsed;
         }
 
     }
