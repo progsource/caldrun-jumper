@@ -148,11 +148,11 @@
         if (!isGameStop) {
             if (neko.body.touching.down) {
                 neko.body.velocity.y = -900;
-            }
 
-            neko.animations.stop();
-            neko.animations.frame = 16;
-            fx.play();
+                neko.animations.stop();
+                neko.animations.frame = 16;
+                fx.play();
+            }
         } else {
             reset();
         }
@@ -248,7 +248,8 @@
         startTimer();
         scoreText.text = 'score: 0';
         caldrun.destroy();
-        neko.tint = colors[getRand(0, colorsLength)];
+        neko.tint = colors[getRand(0, colorsLength - 1)];
+        bgfx.play();
     }
 // -----------------------------------------------------------------------------
 
