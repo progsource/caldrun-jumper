@@ -41,7 +41,15 @@
         bgfx,
         isGameStop = false,
         gameOverText,
-        isGameOverShown;
+        isGameOverShown,
+        caldrun,
+        colors = [
+            0x0000cc,
+            0xcccccc,
+            0x00ffff,
+            0xffff00
+        ],
+        colorsLength = colors.length;
 
 
 // -----------------------------------------------------------------------------
@@ -239,6 +247,8 @@
         isGameStop = false;
         startTimer();
         scoreText.text = 'score: 0';
+        caldrun.destroy();
+        neko.tint = colors[getRand(0, colorsLength)];
     }
 // -----------------------------------------------------------------------------
 
@@ -249,6 +259,7 @@
         game.load.spritesheet('neko', 'img/Neko_edited.png', 32, 32, 17);
 
         game.load.spritesheet('items', 'img/items.png', 32, 32);
+        game.load.spritesheet('caldrun', 'img/boil.png', 32, 32);
 
         game.load.audio('sfx', 'sounds/sound5.ogg');
         game.load.audio('sfxpickup', 'sounds/sound4.ogg');
@@ -298,7 +309,7 @@
         timeText = game.add.text(16, 64, '0', { fontSize: '32px', fill: '#fff' });
         startTimer();
 
-        if (storageAvailable('localStorage')) {
+        if (storageAvailable('localStorage') && !localStorage.getItem('score')) {
             localStorage.setItem('playerName', '');
             localStorage.setItem('score', 0);
         }
@@ -334,12 +345,15 @@
 
             setTimeout(function() {
                 updateHighscore();
+                caldrun = game.add.sprite(200, game.world.height - 150, 'caldrun');
+                caldrun.animations.add('boil', [0,1,2,3]);
+                caldrun.animations.play('boil', 10, true);
                 var highscore = getHighscore();
                 gameOverText = game.add.text(
                     game.world.width / 6,
                     game.world.height / 4,
                     "finish!\nhighscore player: " + highscore.playerName + "\nhighscore: " + highscore.score + "\nyour score: " + score + "\npress space",
-                    {fontSize: '54px', fill: '#fff'}
+                    {fontSize: '42px', fill: '#fff'}
                 );
             }, 200);
         }
