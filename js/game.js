@@ -34,7 +34,7 @@
         isAnItemVisible = false,
         lastItemPositionX = 0,
         itemMinDistance = 70,
-        timeElapsed = 90,
+        timeElapsed = 20,
         timeText,
         nekoSpeed = 500,
         gameTimer,
@@ -49,7 +49,10 @@
             0x00ffff,
             0xffff00
         ],
-        colorsLength = colors.length;
+        colorsLength = colors.length,
+        collectedItems = [],
+        currentItemIndex,
+        isBoilingTriggered = false;
 
 
 // -----------------------------------------------------------------------------
@@ -215,6 +218,7 @@
             setTimeout(function() {
                 item.destroy();
                 score += 10;
+                collectedItems[collectedItems.length] = currentItemIndex;
                 updateScoreText();
                 isKillItemTriggered = false;
                 isAnItemVisible = false;
@@ -223,7 +227,7 @@
     }
 
     function showANewItem() {
-        var randNr = getRand(0, collectiblesLength - 1);
+        currentItemIndex = getRand(0, collectiblesLength - 1);
         lastItemPositionX = getRandAwayFromX(20, game.world.width - 40);
 
         var item = collectibleItems.create(
@@ -231,7 +235,7 @@
             getRand(300, 400),
             'items'
         );
-        item.animations.frame = randNr;
+        item.animations.frame = currentItemIndex;
         isAnItemVisible = true;
     }
 
@@ -246,7 +250,6 @@
         isGameStop = false;
         startTimer();
         scoreText.text = 'score: 0';
-        caldrun.destroy();
         neko.tint = colors[getRand(0, colorsLength - 1)];
         bgfx.play();
     }
@@ -302,10 +305,13 @@
         bgfx = game.add.audio('bgsfx');
         bgfx.play();
 
-        // setTimeout(showANewItem, 100);
+        caldrun = game.add.sprite(700, game.world.height - 150, 'caldrun');
+        caldrun.animations.add('boil', [0,1,2,3]);
+        caldrun.animations.play('boil', 10, true);
+        game.physics.arcade.enable(caldrun);
+        caldrun.kill();
 
         scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#fff' });
-
         timeText = game.add.text(16, 64, '0', { fontSize: '32px', fill: '#fff' });
         startTimer();
 
@@ -332,8 +338,48 @@
         };
     }
 
-    function update() {
+    function throwItemIntoCaldrun() {
+        // console.log('in throw item you b****');
+        var itemNr = collectedItems.shift();
 
+        var item = collectibleItems.create(
+            700,
+            200,
+            'items'
+        );
+        item.animations.frame = itemNr;
+        item.body.gravity.y = 100;
+    }
+
+    function boilItem(cald, collectible) {
+        if (!isBoilingTriggered) {
+            isBoilingTriggered = true;
+            // setTimeout(function() {
+                collectible.destroy();
+                if (0 < collectedItems.length) {
+                    throwItemIntoCaldrun();
+                } else {
+                    showHighscore();
+                }
+                isBoilingTriggered = false;
+            // }, 200);
+        }
+    }
+
+    function showHighscore() {
+        caldrun.kill();
+        var highscore = getHighscore();
+        gameOverText = game.add.text(
+            game.world.width / 6,
+            game.world.height / 4,
+            "finish!\nhighscore player: " + highscore.playerName
+                + "\nhighscore: " + highscore.score + "\nyour score: " + score
+                + "\npress space",
+            {fontSize: '42px', fill: '#fff'}
+        );
+    }
+
+    function update() {
         if (0 >= timeElapsed && !isGameOverShown) {
             neko.animations.stop();
             clearInterval(gameTimer);
@@ -345,22 +391,22 @@
 
             setTimeout(function() {
                 updateHighscore();
-                caldrun = game.add.sprite(200, game.world.height - 150, 'caldrun');
-                caldrun.animations.add('boil', [0,1,2,3]);
-                caldrun.animations.play('boil', 10, true);
-                var highscore = getHighscore();
-                gameOverText = game.add.text(
-                    game.world.width / 6,
-                    game.world.height / 4,
-                    "finish!\nhighscore player: " + highscore.playerName + "\nhighscore: " + highscore.score + "\nyour score: " + score + "\npress space",
-                    {fontSize: '42px', fill: '#fff'}
-                );
+
+                caldrun.revive();
+                caldrun.enableBody = true;
+                caldrun.body.immovable = true;
+
+                throwItemIntoCaldrun();
+
             }, 200);
         }
+        game.physics.arcade.collide(caldrun, collectibleItems, boilItem);
+        // game.physics.arcade.overlap(caldrun, collectibleItems, boilItem, null, this);
 
         if (!isGameStop) {
             game.physics.arcade.collide(neko, platforms);
             game.physics.arcade.overlap(neko, collectibleItems, collectItem, null, this);
+    // console.log(neko, 'neko');
 
             if (neko.body.touching.down && neko.body.velocity.x < 0) {
                 displayGoLeft();
@@ -382,7 +428,7 @@
     }
 
     function render() {
-        // game.debug.spriteInfo(neko, 20, 32);
+        // game.debug.group(collectibleItems, 20, 32);
 
     }
 }(Phaser));
