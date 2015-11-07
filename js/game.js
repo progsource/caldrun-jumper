@@ -19,6 +19,7 @@
         cursors = [],
         otherCursors,
         fx,
+        fxpu,
         sprite,
         tween,
         platforms,
@@ -33,7 +34,7 @@
         isAnItemVisible = false,
         lastItemPositionX = 0,
         itemMinDistance = 70,
-        timeElapsed = 0,
+        timeElapsed = 90,
         timeText,
         nekoSpeed = 500,
         gameTimer,
@@ -62,7 +63,7 @@
     }
 
     function setTime() {
-        ++timeElapsed;
+        --timeElapsed;
     }
 
     function startTimer() {
@@ -185,6 +186,7 @@
 
     function collectItem(player, item) {
         item.body.velocity.y = -200;
+        fxpu.play();
         if (!isKillItemTriggered) {
             isKillItemTriggered = true;
             setTimeout(function() {
@@ -220,6 +222,7 @@
         game.load.spritesheet('items', 'img/items.png', 32, 32);
 
         game.load.audio('sfx', 'sounds/sound5.ogg');
+        game.load.audio('sfxpickup', 'sounds/sound4.ogg');
         game.load.audio('bgsfx', 'sounds/An_Adventure_Awaits.mp3');
     }
 
@@ -256,6 +259,7 @@
         keyBoardSetup();
 
         fx = game.add.audio('sfx');
+        fxpu = game.add.audio('sfxpickup');
         bgfx = game.add.audio('bgsfx');
         bgfx.play();
 
@@ -269,13 +273,13 @@
 
     function update() {
 
-        if (90 <= timeElapsed) {
+        if (0 >= timeElapsed) {
             // console.log('gameOver');
 
             neko.animations.stop();
             clearInterval(gameTimer);
 
-            timeText.text = 90;
+            timeText.text = 0;
             bgfx.stop();
             isGameStop = true;
 
