@@ -286,9 +286,11 @@
         bgfx.play();
         collectedItems = [];
         splashDrawObject.kill();
+        scoreText.revive(); timeText.revive();
     }
 
     function splash() {
+        scoreText.kill(); timeText.kill();
         nextColor = colors[getRand(0, colorsLength - 1)];
 
         splashDrawObject.revive();
