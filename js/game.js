@@ -272,7 +272,6 @@
     }
 
     function secondPreload() {
-        console.log('secondPreload');
         game.load.spritesheet('neko', 'img/Neko_edited.png', 32, 32, 17);
 
         game.load.spritesheet('items', 'img/items.png', 32, 32);
@@ -287,7 +286,6 @@
     }
 
     function secondCreate() {
-        console.log('secondcreate');
         game.physics.startSystem(Phaser.Physics.ARCADE);
         platforms = game.add.group();
         platforms.enableBody = true;
@@ -377,16 +375,13 @@
     }
 
     function boilItem(cald, collectible) {
-        // if (!isBoilingTriggered) {
-        //     isBoilingTriggered = true;
-            collectible.destroy();
-            if (0 < collectedItems.length) {
-                throwItemIntoCaldrun();
-            } else {
-                showHighscore();
-            }
-        //     isBoilingTriggered = false;
-        // }
+        collectible.destroy();
+        if (0 < collectedItems.length) {
+            throwItemIntoCaldrun();
+        } else {
+            isBoilingInProgress = false;
+            showHighscore();
+        }
     }
 
     function showHighscore() {
