@@ -20,6 +20,7 @@
         otherCursors,
         fx,
         fxpu,
+        gofx,
         sprite,
         tween,
         platforms,
@@ -262,6 +263,7 @@
         startTimer();
         scoreText.text = 'score: 0';
         neko.tint = colors[getRand(0, colorsLength - 1)];
+        gofx.stop();
         bgfx.play();
     }
 // -----------------------------------------------------------------------------
@@ -280,6 +282,7 @@
         game.load.audio('sfx', 'sounds/sound5.ogg');
         game.load.audio('sfxpickup', 'sounds/sound4.ogg');
         game.load.audio('bgsfx', 'sounds/An_Adventure_Awaits.mp3');
+        game.load.audio('gosfx', 'sounds/BEAD.mp3');
 
         game.load.start();
         game.load.onLoadComplete.add(secondCreate);
@@ -315,7 +318,8 @@
 
         fx = game.add.audio('sfx');
         fxpu = game.add.audio('sfxpickup');
-        bgfx = game.add.audio('bgsfx');
+        gofx = game.add.audio('gosfx', 1, true);
+        bgfx = game.add.audio('bgsfx', 1, true);
         bgfx.play();
 
         caldrun = game.add.sprite(game.world.centerX, game.world.height - 150, 'caldrun');
@@ -412,6 +416,7 @@
 
                 timeText.text = 0;
                 bgfx.stop();
+                gofx.play();
                 isGameStop = true;
                 isGameOverShown = true;
 
