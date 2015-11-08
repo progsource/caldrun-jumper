@@ -48,7 +48,8 @@
             0x0099cc,
             0xcccccc,
             0x00ffff,
-            0xffff00
+            0xffff00,
+            0xcc00cc
         ],
         colorsLength = colors.length,
         collectedItems = [],
@@ -59,7 +60,9 @@
         isCreateSecondTriggered = false,
         isGameLoaded = false,
         loadingText,
-        isBoilingInProgress = false;
+        isBoilingInProgress = false,
+        circle,
+        nextColor;
 
 
 // -----------------------------------------------------------------------------
@@ -165,7 +168,8 @@
         } else {
             if (isBoilingInProgress) {
                 isBoilingInProgress = false;
-                showHighscore();
+                // showHighscore();
+                splash();
             } else {
                 reset();
             }
@@ -212,11 +216,16 @@
         }
 
         otherCursors = game.input.keyboard.addKeys({
-            'space': Phaser.KeyCode.SPACEBAR
+            'space': Phaser.KeyCode.SPACEBAR,
+            'timeKill': Phaser.KeyCode.U
         });
 
         otherCursors.space.onUp.add(function(e) {
             onSpace(e);
+        });
+
+        otherCursors.timeKill.onUp.add(function(e) {
+            timeElapsed = 10;
         });
     }
 
@@ -262,9 +271,36 @@
         isGameStop = false;
         startTimer();
         scoreText.text = 'score: 0';
-        neko.tint = colors[getRand(0, colorsLength - 1)];
+        neko.tint = nextColor;
         gofx.stop();
         bgfx.play();
+        collectedItems = [];
+    }
+
+    function splash() {
+        nextColor = colors[getRand(0, colorsLength - 1)];
+        // console.log('nextcolor', nextColor);
+
+        // circle = game.add.graphics(game.width / 2, game.height / 2, 'splash', true);
+        // circle.ctx.fillStyle = nextColor;
+        // circle.ctx.beginPath();
+        // circle.ctx.arc(300, 200, 100, 0, Math.PI*2, true);
+        // circle.ctx.closePath();
+        // circle.ctx.fill();
+        //
+        // var drawnObject = game.add.sprite(0, game.height - 20, circle);
+        // setTimeout(function() {
+        //     circle.ctx.beginPath();
+        //     circle.ctx.arc(300, 200, 300, 0, Math.PI*2, true);
+        //     circle.ctx.closePath();
+        //     circle.ctx.fill();
+        //
+        //     setTimeout(function() {
+        //         circle.destroy();
+                // drawnObject.destroy();
+                showHighscore();
+        //     }, 150);
+        // }, 150);
     }
 // -----------------------------------------------------------------------------
 
@@ -303,7 +339,6 @@
         var drawnObject = game.add.sprite(0, game.height - 20, bmd);
         platforms.add(drawnObject);
         drawnObject.body.immovable = true;
-
 
         neko = game.add.sprite(0, game.height - 100, 'neko');
         neko.animations.add('walkRight', [0, 1, 2, 3, 4, 5]);
@@ -384,7 +419,8 @@
             throwItemIntoCaldrun();
         } else {
             isBoilingInProgress = false;
-            showHighscore();
+            splash();
+            // showHighscore();
         }
     }
 
