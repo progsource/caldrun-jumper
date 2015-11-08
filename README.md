@@ -1,4 +1,4 @@
-# InnoGames Game Jam \#9
+# Caldrun Jumper - InnoGames Game Jam \#9 - Theme: Strange Rituals - by @progsource
 
 Theme: **Strange Rituals**
 
