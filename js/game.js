@@ -34,7 +34,7 @@
         isAnItemVisible = false,
         lastItemPositionX = 0,
         itemMinDistance = 70,
-        timeElapsed = 20,
+        timeElapsed = 90,
         timeText,
         nekoSpeed = 500,
         gameTimer,
@@ -52,7 +52,13 @@
         colorsLength = colors.length,
         collectedItems = [],
         currentItemIndex,
-        isBoilingTriggered = false;
+        currentItem,
+        isBoilingTriggered = false,
+        isPreloadSecondTriggered = false,
+        isCreateSecondTriggered = false,
+        isGameLoaded = false,
+        loadingText,
+        isBoilingInProgress = false;
 
 
 // -----------------------------------------------------------------------------
@@ -156,7 +162,12 @@
                 fx.play();
             }
         } else {
-            reset();
+            if (isBoilingInProgress) {
+                isBoilingInProgress = false;
+                showHighscore();
+            } else {
+                reset();
+            }
         }
     }
 
@@ -230,12 +241,12 @@
         currentItemIndex = getRand(0, collectiblesLength - 1);
         lastItemPositionX = getRandAwayFromX(20, game.world.width - 40);
 
-        var item = collectibleItems.create(
+        currentItem = collectibleItems.create(
             lastItemPositionX,
             getRand(300, 400),
             'items'
         );
-        item.animations.frame = currentItemIndex;
+        currentItem.animations.frame = currentItemIndex;
         isAnItemVisible = true;
     }
 
@@ -257,8 +268,11 @@
 
     function preload() {
         game.load.image('background1', 'img/background.jpg');
-        game.load.spritesheet('sprite', 'img/spritesheet.png', 20, 30);
 
+    }
+
+    function secondPreload() {
+        console.log('secondPreload');
         game.load.spritesheet('neko', 'img/Neko_edited.png', 32, 32, 17);
 
         game.load.spritesheet('items', 'img/items.png', 32, 32);
@@ -267,11 +281,14 @@
         game.load.audio('sfx', 'sounds/sound5.ogg');
         game.load.audio('sfxpickup', 'sounds/sound4.ogg');
         game.load.audio('bgsfx', 'sounds/An_Adventure_Awaits.mp3');
+
+        game.load.start();
+        game.load.onLoadComplete.add(secondCreate);
     }
 
-    function create() {
+    function secondCreate() {
+        console.log('secondcreate');
         game.physics.startSystem(Phaser.Physics.ARCADE);
-        game.add.sprite(0, 0, 'background1');
         platforms = game.add.group();
         platforms.enableBody = true;
         collectibleItems = game.add.group();
@@ -298,14 +315,12 @@
         neko.body.gravity.y = 1000;
         neko.body.collideWorldBounds = true;
 
-        keyBoardSetup();
-
         fx = game.add.audio('sfx');
         fxpu = game.add.audio('sfxpickup');
         bgfx = game.add.audio('bgsfx');
         bgfx.play();
 
-        caldrun = game.add.sprite(700, game.world.height - 150, 'caldrun');
+        caldrun = game.add.sprite(game.world.centerX, game.world.height - 150, 'caldrun');
         caldrun.animations.add('boil', [0,1,2,3]);
         caldrun.animations.play('boil', 10, true);
         game.physics.arcade.enable(caldrun);
@@ -313,12 +328,22 @@
 
         scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#fff' });
         timeText = game.add.text(16, 64, '0', { fontSize: '32px', fill: '#fff' });
-        startTimer();
 
         if (storageAvailable('localStorage') && !localStorage.getItem('score')) {
             localStorage.setItem('playerName', '');
             localStorage.setItem('score', 0);
         }
+
+        loadingText.destroy();
+        keyBoardSetup();
+        startTimer();
+        isGameLoaded = true;
+    }
+
+    function create() {
+        game.add.sprite(0, 0, 'background1');
+
+        loadingText = game.add.text(50, game.world.centerY - 21, 'game will start in a few seconds...', { fontSize: '42px', fill: '#fff' })
     }
 
     function updateHighscore() {
@@ -339,31 +364,29 @@
     }
 
     function throwItemIntoCaldrun() {
-        // console.log('in throw item you b****');
+        isBoilingInProgress = true;
         var itemNr = collectedItems.shift();
 
         var item = collectibleItems.create(
-            700,
-            200,
+            game.world.centerX,
+            100,
             'items'
         );
         item.animations.frame = itemNr;
-        item.body.gravity.y = 100;
+        item.body.gravity.y = 1200;
     }
 
     function boilItem(cald, collectible) {
-        if (!isBoilingTriggered) {
-            isBoilingTriggered = true;
-            // setTimeout(function() {
-                collectible.destroy();
-                if (0 < collectedItems.length) {
-                    throwItemIntoCaldrun();
-                } else {
-                    showHighscore();
-                }
-                isBoilingTriggered = false;
-            // }, 200);
-        }
+        // if (!isBoilingTriggered) {
+        //     isBoilingTriggered = true;
+            collectible.destroy();
+            if (0 < collectedItems.length) {
+                throwItemIntoCaldrun();
+            } else {
+                showHighscore();
+            }
+        //     isBoilingTriggered = false;
+        // }
     }
 
     function showHighscore() {
@@ -380,51 +403,57 @@
     }
 
     function update() {
-        if (0 >= timeElapsed && !isGameOverShown) {
-            neko.animations.stop();
-            clearInterval(gameTimer);
-
-            timeText.text = 0;
-            bgfx.stop();
-            isGameStop = true;
-            isGameOverShown = true;
-
-            setTimeout(function() {
-                updateHighscore();
-
-                caldrun.revive();
-                caldrun.enableBody = true;
-                caldrun.body.immovable = true;
-
-                throwItemIntoCaldrun();
-
-            }, 200);
-        }
-        game.physics.arcade.collide(caldrun, collectibleItems, boilItem);
-        // game.physics.arcade.overlap(caldrun, collectibleItems, boilItem, null, this);
-
-        if (!isGameStop) {
-            game.physics.arcade.collide(neko, platforms);
-            game.physics.arcade.overlap(neko, collectibleItems, collectItem, null, this);
-    // console.log(neko, 'neko');
-
-            if (neko.body.touching.down && neko.body.velocity.x < 0) {
-                displayGoLeft();
-            }
-            if (neko.body.touching.down && neko.body.velocity.x > 0) {
-                displayGoRight();
-            }
-            if (neko.body.touching.down && neko.body.velocity.x === 0) {
-                displayIdle();
-            }
-
-            if (!isAnItemVisible) {
-                showANewItem();
-            }
-
-            timeText.text = timeElapsed;
+        if (!isPreloadSecondTriggered) {
+            secondPreload();
+            isPreloadSecondTriggered = true;
         }
 
+        if (isGameLoaded) {
+            if (0 >= timeElapsed && !isGameOverShown) {
+                neko.animations.stop();
+                clearInterval(gameTimer);
+                currentItem.destroy();
+                isAnItemVisible = false;
+
+                timeText.text = 0;
+                bgfx.stop();
+                isGameStop = true;
+                isGameOverShown = true;
+
+                setTimeout(function() {
+                    updateHighscore();
+
+                    caldrun.revive();
+                    caldrun.enableBody = true;
+                    caldrun.body.immovable = true;
+
+                    throwItemIntoCaldrun();
+
+                }, 200);
+            }
+            game.physics.arcade.collide(caldrun, collectibleItems, boilItem);
+
+            if (!isGameStop) {
+                game.physics.arcade.collide(neko, platforms);
+                game.physics.arcade.overlap(neko, collectibleItems, collectItem, null, this);
+
+                if (neko.body.touching.down && neko.body.velocity.x < 0) {
+                    displayGoLeft();
+                }
+                if (neko.body.touching.down && neko.body.velocity.x > 0) {
+                    displayGoRight();
+                }
+                if (neko.body.touching.down && neko.body.velocity.x === 0) {
+                    displayIdle();
+                }
+
+                if (!isAnItemVisible) {
+                    showANewItem();
+                }
+
+                timeText.text = timeElapsed;
+            }
+        }
     }
 
     function render() {
