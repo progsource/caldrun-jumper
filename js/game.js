@@ -341,7 +341,7 @@
     function create() {
         game.add.sprite(0, 0, 'background1');
 
-        loadingText = game.add.text(50, game.world.centerY - 21, 'game will start in a few seconds...', { fontSize: '42px', fill: '#fff' })
+        loadingText = game.add.text(50, game.world.centerY - 21, "caldrun jumper\n\ngame will start in a few seconds...", { fontSize: '42px', fill: '#fff' })
     }
 
     function updateHighscore() {
